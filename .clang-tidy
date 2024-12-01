@@ -1,0 +1,17 @@
+Checks: '*,
+         -abseil-*,
+         -altera-*,
+         -android-*,
+         -fuchsia-*,
+         -google-*,
+         -llvm-*,
+         -llvmlibc-*,
+         -zircon-*,
+         -bugprone-easily-swappable-parameters,
+         -misc-non-private-member-variables-in-classes,
+         -modernize-use-trailing-return-type,
+         -readability-avoid-const-params-in-decls,
+         -readability-identifier-length'
+WarningsAsErrors: ''
+HeaderFilterRegex: ''
+FormatStyle: none
