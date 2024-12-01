@@ -71,3 +71,7 @@ target_add_warnings(d01p1)
 target_add_link_options(d01p1)
 target_link_libraries(d01p1 PRIVATE fmt::fmt utility)
 
+add_executable(d01p2 src/d01p2.cpp)
+target_add_warnings(d01p2)
+target_add_link_options(d01p2)
+target_link_libraries(d01p2 PRIVATE fmt::fmt utility)
