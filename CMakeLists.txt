@@ -15,7 +15,14 @@ FetchContent_Declare(
   GIT_REPOSITORY https://github.com/fmtlib/fmt.git
   OVERRIDE_FIND_PACKAGE
 )
+FetchContent_Declare(
+  libassert
+  GIT_REPOSITORY https://github.com/jeremy-rifkin/libassert.git
+  GIT_TAG main
+  OVERRIDE_FIND_PACKAGE
+)
 find_package(fmt REQUIRED)
+find_package(libassert REQUIRED)
 
 function(target_add_warnings target)
   # enable all warnings
@@ -82,4 +89,4 @@ target_link_libraries(d02p1 PRIVATE fmt::fmt utility)
 add_executable(d02p2 src/d02p2.cpp)
 target_add_warnings(d02p2)
 target_add_link_options(d02p2)
-target_link_libraries(d02p2 PRIVATE fmt::fmt utility)
+target_link_libraries(d02p2 PRIVATE fmt::fmt libassert::assert utility)
