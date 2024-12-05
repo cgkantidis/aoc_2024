@@ -60,9 +60,9 @@ main(int argc, char const *const *argv) {
     return 1;
   }
 
-  std::ifstream infile(argv[1]);
+  std::ifstream infile(args[1]);
   if (!infile.is_open()) {
-    fmt::println(stderr, "couldn't open file {}", argv[1]);
+    fmt::println(stderr, "couldn't open file {}", args[1]);
     return 2;
   }
 

@@ -1,53 +1,9 @@
-#include <algorithm> // std::ranges::sort
 #include <fmt/core.h>
 #include <fstream>
-#include <ranges>
 #include <regex>
 #include <string>
 
 #include <libassert/assert.hpp>
-
-#include "utility.hpp"
-
-bool
-are_increasing(std::size_t a, std::size_t b) {
-  return (a < b) && (b - a < 4);
-}
-
-bool
-is_safe_int(std::ranges::range auto &&levels) {
-  return std::ranges::all_of(std::views::slide(levels, 2), [](auto window) {
-    return are_increasing(window[0], window[1]);
-  });
-}
-
-bool
-is_safe_int(std::ranges::range auto &&levels, std::size_t pivot) {
-  auto left_end = std::next(levels.begin(), pivot);
-  auto left = std::ranges::subrange(levels.begin(), left_end);
-  auto right_begin = std::next(left_end, 1);
-  auto right = std::ranges::subrange(right_begin, levels.end());
-
-  if (left.empty()) {
-    return is_safe_int(right);
-  }
-  if (right.empty()) {
-    return is_safe_int(left);
-  }
-  return is_safe_int(left) && is_safe_int(right)
-         && are_increasing(levels[pivot - 1], levels[pivot + 1]);
-}
-
-bool
-is_safe(std::ranges::range auto &&levels) {
-  for (std::size_t pivot = 0; pivot < levels.size(); ++pivot) {
-    if (is_safe_int(levels, pivot)
-        || is_safe_int(std::views::reverse(levels), pivot)) {
-      return true;
-    }
-  }
-  return false;
-}
 
 std::uint64_t
 collect_all_muls(std::string correpted) {
@@ -88,9 +44,9 @@ main(int argc, char const *const *argv) {
     return 1;
   }
 
-  std::ifstream infile(argv[1]);
+  std::ifstream infile(args[1]);
   if (!infile.is_open()) {
-    fmt::println(stderr, "couldn't open file {}", argv[1]);
+    fmt::println(stderr, "couldn't open file {}", args[1]);
     return 2;
   }
 
