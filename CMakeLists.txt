@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.16..3.31.2)
 
 project(aoc_2024 VERSION 1.0.0 LANGUAGES CXX)
 
@@ -71,7 +71,6 @@ set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 add_library(utility src/utility.cpp)
 target_add_warnings(utility)
-target_include_directories(utility PUBLIC include)
 
 function(add_aoc_target target)
   add_executable(${target} src/${target}.cpp)
