@@ -33,3 +33,25 @@ split(std::string_view sv, std::string_view delim) {
   }
   return tokens;
 }
+
+std::uint8_t
+get_num_digits(std::uint64_t num) {
+  if (num == 0) {
+    return 1;
+  }
+  std::uint8_t num_digits{};
+  while (num != 0) {
+    ++num_digits;
+    num /= 10;
+  }
+  return num_digits;
+}
+
+std::uint64_t
+pow10(std::uint8_t exp) {
+  std::uint64_t val{1};
+  for (std::uint8_t i{0}; i < exp; ++i) {
+    val *= 10;
+  }
+  return val;
+}
