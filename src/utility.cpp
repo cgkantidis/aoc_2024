@@ -3,6 +3,16 @@
 
 #include "utility.hpp"
 
+bool
+is_digit(char ch) {
+  return ch >= '0' && ch <= '9';
+}
+
+uint8_t
+char_to_int(char ch) {
+  return static_cast<uint8_t>(ch - '0');
+}
+
 std::size_t
 str_to_int(std::string_view sv) {
   std::size_t result{};

@@ -5,6 +5,12 @@
 #include <string_view>
 #include <vector>
 
+bool
+is_digit(char ch);
+
+uint8_t
+char_to_int(char ch);
+
 std::size_t
 str_to_int(std::string_view sv);
 
