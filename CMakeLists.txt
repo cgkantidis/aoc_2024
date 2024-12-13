@@ -77,6 +77,8 @@ function(add_aoc_target target)
     add_executable(${target} src/${target}.cpp)
     target_add_warnings(${target})
     target_add_link_options(${target})
+    # enable whole-program optimizations
+    target_compile_options(${target} PRIVATE -fwhole-program)
     target_link_libraries(${target} PRIVATE fmt::fmt libassert::assert utility)
   endif()
 endfunction()
