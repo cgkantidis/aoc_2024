@@ -84,7 +84,7 @@ main(int argc, char const *const *argv) {
   for (std::string line; std::getline(infile, line);) {
     std::vector<std::string_view> tokens = split(line);
     std::vector<std::uint64_t> levels;
-    std::ranges::transform(tokens, std::back_inserter(levels), str_to_int);
+    std::ranges::transform(tokens, std::back_inserter(levels), str_to_int<std::uint64_t>);
     if (is_safe(levels)) {
       ++total;
     }

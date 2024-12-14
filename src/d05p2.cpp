@@ -49,7 +49,7 @@ scan_order_rules_and_pages(std::ranges::range auto &&lines) {
       ++line_it;
       break;
     }
-    auto tokens = std::views::transform(split(*line_it, "|"), str_to_int);
+    auto tokens = std::views::transform(split(*line_it, "|"), str_to_int<std::uint64_t>);
     auto find_it = order_rules.find(tokens[0]);
     if (find_it == order_rules.end()) {
       order_rules.emplace(tokens[0], std::set{tokens[1]});
@@ -62,7 +62,7 @@ scan_order_rules_and_pages(std::ranges::range auto &&lines) {
   std::vector<std::vector<std::uint64_t>> pages;
   while (line_it != line_end) {
     auto tokens = std::ranges::to<std::vector>(
-        std::views::transform(split(*line_it, ","), str_to_int));
+        std::views::transform(split(*line_it, ","), str_to_int<std::uint64_t>));
     pages.emplace_back(std::move(tokens));
     ++line_it;
   }

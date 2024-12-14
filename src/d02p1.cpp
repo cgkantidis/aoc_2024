@@ -35,7 +35,7 @@ main(int argc, char const *const *argv) {
   std::size_t total{};
   for (std::string line; std::getline(infile, line);) {
     auto tokens = split(line);
-    if (is_safe(tokens | std::views::transform(str_to_int))) {
+    if (is_safe(tokens | std::views::transform(str_to_int<std::uint64_t>))) {
       ++total;
     }
   }

@@ -85,11 +85,11 @@ parse_totals_and_operands(std::ranges::range auto &&lines) {
   std::vector<std::vector<std::uint64_t>> operands;
   for (auto const &line : lines) {
     auto tokens = split(line, ": ");
-    totals.emplace_back(str_to_int(tokens[0]));
+    totals.emplace_back(str_to_int<std::uint64_t>(tokens[0]));
     std::vector<std::uint64_t> oper;
     std::ranges::transform(split(tokens[1], " "),
                            std::back_inserter(oper),
-                           str_to_int);
+                           str_to_int<std::uint64_t>);
     operands.emplace_back(std::move(oper));
   }
   return {totals, operands};

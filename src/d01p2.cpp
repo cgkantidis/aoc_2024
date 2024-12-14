@@ -22,8 +22,8 @@ int main(int argc, char const * const *argv) {
   std::string line;
   while (std::getline(infile, line)) {
     auto tokens = split(line);
-    left_list.emplace_back(str_to_int(tokens[0]));
-    std::size_t right{str_to_int(tokens[1])};
+    left_list.emplace_back(str_to_int<std::uint64_t>(tokens[0]));
+    std::size_t right{str_to_int<std::uint64_t>(tokens[1])};
     auto [it, is_new] = frequency.emplace(right, 1);
     if (!is_new) {
       ++it->second;

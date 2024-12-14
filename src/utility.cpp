@@ -1,6 +1,3 @@
-#include <charconv>
-#include <utility> // unreachable
-
 #include "utility.hpp"
 
 bool
@@ -11,19 +8,6 @@ is_digit(char ch) {
 uint8_t
 char_to_int(char ch) {
   return static_cast<uint8_t>(ch - '0');
-}
-
-std::size_t
-str_to_int(std::string_view sv) {
-  std::size_t result{};
-  auto [ptr, ec] = std::from_chars(sv.data(), sv.data() + sv.size(), result);
-
-  if (ec == std::errc()) {
-    return result;
-  }
-
-  std::unreachable();
-  return 0;
 }
 
 std::vector<std::string_view>
