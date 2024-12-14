@@ -75,13 +75,13 @@ namespace
 void
 tests();
 std::uint64_t
-sum_of_score_of_trailheads(std::ranges::range auto &&lines);
+sum_of_rating_of_trailheads(std::ranges::range auto &&lines);
 Matrix<unsigned>
 generate_grid(std::ranges::range auto &&lines);
 std::uint64_t
-get_trailhead_score(Matrix<unsigned> const &grid,
-                    std::size_t row,
-                    std::size_t col);
+get_trailhead_rating(Matrix<unsigned> const &grid,
+                     std::size_t row,
+                     std::size_t col);
 [[maybe_unused]] void
 print_grid(Matrix<unsigned> const &grid);
 } // namespace
@@ -107,7 +107,7 @@ main(int argc, char const *const *argv) {
     lines.emplace_back(std::move(line));
   }
 
-  fmt::println("{}", sum_of_score_of_trailheads(lines));
+  fmt::println("{}", sum_of_rating_of_trailheads(lines));
   return 0;
 }
 
@@ -118,24 +118,15 @@ tests() {
   using namespace std::literals::string_view_literals;
   {
     auto const lines = std::array{
-        "0123"sv,
-        "1234"sv,
-        "8765"sv,
-        "9876"sv,
+        ".....0."sv,
+        "..4321."sv,
+        "..5..2."sv,
+        "..6543."sv,
+        "..7..4."sv,
+        "..8765."sv,
+        "..9...."sv,
     };
-    ASSERT(sum_of_score_of_trailheads(lines) == 1);
-  }
-  {
-    auto const lines = std::array{
-        "...0..."sv,
-        "...1..."sv,
-        "...2..."sv,
-        "6543456"sv,
-        "7.....7"sv,
-        "8.....8"sv,
-        "9.....9"sv,
-    };
-    ASSERT(sum_of_score_of_trailheads(lines) == 2);
+    ASSERT(sum_of_rating_of_trailheads(lines) == 3);
   }
   {
     auto const lines = std::array{
@@ -147,19 +138,18 @@ tests() {
         "876...."sv,
         "987...."sv,
     };
-    ASSERT(sum_of_score_of_trailheads(lines) == 4);
+    ASSERT(sum_of_rating_of_trailheads(lines) == 13);
   }
   {
     auto const lines = std::array{
-        "10..9.."sv,
-        "2...8.."sv,
-        "3...7.."sv,
-        "4567654"sv,
-        "...8..3"sv,
-        "...9..2"sv,
-        ".....01"sv,
+        "012345"sv,
+        "123456"sv,
+        "234567"sv,
+        "345678"sv,
+        "4.6789"sv,
+        "56789."sv,
     };
-    ASSERT(sum_of_score_of_trailheads(lines) == 3);
+    ASSERT(sum_of_rating_of_trailheads(lines) == 227);
   }
   {
     auto const lines = std::array{
@@ -172,19 +162,19 @@ tests() {
         "01329801"sv,
         "10456732"sv,
     };
-    ASSERT(sum_of_score_of_trailheads(lines) == 36);
+    ASSERT(sum_of_rating_of_trailheads(lines) == 81);
   }
 }
 
 std::uint64_t
-sum_of_score_of_trailheads(std::ranges::range auto &&lines) {
+sum_of_rating_of_trailheads(std::ranges::range auto &&lines) {
   auto grid{generate_grid(lines)};
   std::uint64_t total_score{};
   for (std::size_t row = 0; row < grid.rows(); ++row) {
     for (std::size_t col = 0; col < grid.cols(); ++col) {
       if (grid(row, col) == 0) {
         // trailhead
-        total_score += get_trailhead_score(grid, row, col);
+        total_score += get_trailhead_rating(grid, row, col);
       }
     }
   }
@@ -203,10 +193,10 @@ generate_grid(std::ranges::range auto &&lines) {
 }
 
 std::uint64_t
-get_trailhead_score(Matrix<unsigned> const &grid,
-                    std::size_t head_row,
-                    std::size_t head_col) {
-  std::unordered_set<Point> tails;
+get_trailhead_rating(Matrix<unsigned> const &grid,
+                     std::size_t head_row,
+                     std::size_t head_col) {
+  std::uint64_t rating{};
 
   std::vector<Point> trail;
   trail.emplace_back(head_row, head_col);
@@ -219,7 +209,7 @@ get_trailhead_score(Matrix<unsigned> const &grid,
     std::size_t col = tail.col;
 
     if (grid(row, col) == 9) {
-      tails.emplace(row, col);
+      ++rating;
       continue;
     }
 
@@ -253,7 +243,7 @@ get_trailhead_score(Matrix<unsigned> const &grid,
     }
   }
 
-  return tails.size();
+  return rating;
 }
 
 [[maybe_unused]] void
