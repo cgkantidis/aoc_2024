@@ -1,6 +1,7 @@
+#include "fmt/core.h" // fmt::print
+#include "libassert/assert.hpp"
 #include <algorithm> // std::copy_n
 #include <cstdint> // std::size_t
-#include "libassert/assert.hpp"
 
 template <typename T>
 class Matrix
@@ -96,5 +97,14 @@ public:
     DEBUG_ASSERT(row < m_rows);
     DEBUG_ASSERT(col < m_cols);
     return m_data[(row * m_cols) + col];
+  }
+  void
+  print() const {
+    for (std::size_t row = 0; row < m_rows; ++row) {
+      for (std::size_t col = 0; col < m_cols; ++col) {
+        fmt::print("{}", (*this)(row, col));
+      }
+      fmt::println("");
+    }
   }
 };

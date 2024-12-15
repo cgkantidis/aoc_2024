@@ -82,8 +82,6 @@ std::uint64_t
 get_trailhead_score(Matrix<unsigned> const &grid,
                     std::size_t row,
                     std::size_t col);
-[[maybe_unused]] void
-print_grid(Matrix<unsigned> const &grid);
 } // namespace
 
 int
@@ -256,17 +254,4 @@ get_trailhead_score(Matrix<unsigned> const &grid,
   return tails.size();
 }
 
-[[maybe_unused]] void
-print_grid(Matrix<unsigned> const &grid) {
-  for (std::size_t row = 0; row < grid.rows(); ++row) {
-    for (std::size_t col = 0; col < grid.cols(); ++col) {
-      if (grid(row, col) == UNINIT) {
-        fmt::print(".");
-      } else {
-        fmt::print("{}", grid(row, col));
-      }
-    }
-    fmt::println("");
-  }
-}
 } // namespace
