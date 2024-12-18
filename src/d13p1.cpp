@@ -8,6 +8,7 @@
 #include <scn/scan.h>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <utility>
 
 #include "matrix.hpp"
@@ -32,7 +33,39 @@ struct Position
 {
   std::uint64_t x;
   std::uint64_t y;
-  std::uint64_t cost;
+};
+
+/// we need the operator==() to resolve hash collisions
+bool
+operator==(Position const &lhs, Position const &rhs) {
+  return lhs.x == rhs.x && lhs.y == rhs.y;
+}
+
+/// we can use the hash_combine variadic-template function, to combine multiple
+/// hashes into a single one
+template <typename T, typename... Rest>
+constexpr void
+hash_combine(std::size_t &seed, T const &val, Rest const &...rest) {
+  constexpr size_t hash_mask{0x9e3779b9};
+  constexpr size_t lsh{6};
+  constexpr size_t rsh{2};
+  seed ^= std::hash<T>{}(val) + hash_mask + (seed << lsh) + (seed >> rsh);
+  (hash_combine(seed, rest), ...);
+}
+
+/// custom specialization of std::hash injected in namespace std
+template <>
+struct std::hash<Position>
+{
+  std::size_t
+  operator()(Position const &s) const noexcept {
+    std::size_t h1 = std::hash<std::size_t>{}(s.x);
+    std::size_t h2 = std::hash<std::size_t>{}(s.y);
+
+    std::size_t ret_val = 0;
+    hash_combine(ret_val, h1, h2);
+    return ret_val;
+  }
 };
 
 namespace
@@ -171,31 +204,50 @@ generate_games(std::ranges::range auto &&lines) {
 
 std::uint64_t
 min_num_tokens(Game const &game) {
-  auto cmp = [](Position const &pos1, Position const &pos2) {
-    return pos1.cost > pos2.cost;
-  };
-  std::priority_queue<Position, std::vector<Position>, decltype(cmp)> positions(
-      cmp);
-  positions.emplace(game.prize_x, game.prize_y, 0);
+  std::unordered_map<Position, std::uint64_t> position_cost;
+  position_cost.emplace(std::piecewise_construct,
+                        std::forward_as_tuple(game.prize_x, game.prize_y),
+                        std::forward_as_tuple(0));
 
+  std::queue<Position> positions;
+  positions.emplace(game.prize_x, game.prize_y);
   while (!positions.empty()) {
-    auto top = positions.top();
-    fmt::println("{} {} {}", top.x, top.y, top.cost);
+    auto top = positions.front();
     positions.pop();
-    if (top.x == 0 && top.y == 0) {
-      return top.cost;
-    }
+
+    auto top_it = position_cost.find(top);
 
     if (top.x >= game.button_A.step_x && top.y >= game.button_A.step_y) {
-      positions.emplace(top.x - game.button_A.step_x,
-                        top.y - game.button_A.step_y,
-                        top.cost + game.button_A.cost);
+      Position next_pos{top.x - game.button_A.step_x,
+                        top.y - game.button_A.step_y};
+      auto next_it = position_cost.find(next_pos);
+      auto next_cost = top_it->second + game.button_A.cost;
+      if (next_it == position_cost.end()) {
+        positions.emplace(next_pos);
+        position_cost.emplace(next_pos, next_cost);
+      } else if (next_it->second > next_cost) {
+        positions.emplace(next_pos);
+        next_it->second = next_cost;
+      }
     }
     if (top.x >= game.button_B.step_x && top.y >= game.button_B.step_y) {
-      positions.emplace(top.x - game.button_B.step_x,
-                        top.y - game.button_B.step_y,
-                        top.cost + game.button_B.cost);
+      Position next_pos{top.x - game.button_B.step_x,
+                        top.y - game.button_B.step_y};
+      auto next_it = position_cost.find(next_pos);
+      auto next_cost = top_it->second + game.button_B.cost;
+      if (next_it == position_cost.end()) {
+        positions.emplace(next_pos);
+        position_cost.emplace(next_pos, next_cost);
+      } else if (next_it->second > next_cost) {
+        positions.emplace(next_pos);
+        next_it->second = next_cost;
+      }
     }
+  }
+
+  auto find_it = position_cost.find({0, 0});
+  if (find_it != position_cost.end()) {
+    return find_it->second;
   }
 
   return 0;
