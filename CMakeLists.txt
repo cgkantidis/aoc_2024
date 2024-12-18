@@ -16,12 +16,18 @@ FetchContent_Declare(
   OVERRIDE_FIND_PACKAGE
 )
 FetchContent_Declare(
+  scn
+  GIT_REPOSITORY https://github.com/eliaskosunen/scnlib.git
+  OVERRIDE_FIND_PACKAGE
+)
+FetchContent_Declare(
   libassert
   GIT_REPOSITORY https://github.com/jeremy-rifkin/libassert.git
   GIT_TAG main
   OVERRIDE_FIND_PACKAGE
 )
 find_package(fmt REQUIRED)
+find_package(scn REQUIRED)
 find_package(libassert REQUIRED)
 
 function(target_add_warnings target)
@@ -35,7 +41,7 @@ function(target_add_warnings target)
     target_compile_options(${target} PRIVATE -Wduplicated-branches -Wduplicated-cond -Wlogical-op -Wuseless-cast)
   endif()
   # treat all warnings as errors
-  target_compile_options(${target} PRIVATE -Werror -Wno-error=sign-conversion)
+  #target_compile_options(${target} PRIVATE -Werror)
 endfunction()
 
 function(target_add_link_options target)
@@ -79,7 +85,7 @@ function(add_aoc_target target)
     target_add_link_options(${target})
     # enable whole-program optimizations
     target_compile_options(${target} PRIVATE -fwhole-program)
-    target_link_libraries(${target} PRIVATE fmt::fmt libassert::assert utility)
+    target_link_libraries(${target} PRIVATE fmt::fmt scn::scn libassert::assert utility)
   endif()
 endfunction()
 

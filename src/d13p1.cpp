@@ -1,9 +1,11 @@
-#include "fmt/core.h"
-#include "libassert/assert.hpp"
 #include <array>
 #include <cstdint>
+#include <fmt/core.h>
 #include <fstream>
+#include <libassert/assert.hpp>
+#include <queue>
 #include <ranges>
+#include <scn/scan.h>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -24,6 +26,13 @@ struct Game
   Button button_B;
   std::uint64_t prize_x;
   std::uint64_t prize_y;
+};
+
+struct Position
+{
+  std::uint64_t x;
+  std::uint64_t y;
+  std::uint64_t cost;
 };
 
 namespace
@@ -136,22 +145,59 @@ generate_games(std::ranges::range auto &&lines) {
   std::vector<Game> games;
   std::size_t line_idx{};
   while (line_idx < lines.size()) {
-    std::uint64_t val1{};
-    std::uint64_t val2{};
-    std::sscanf(lines[line_idx].data(), "Button A: X+%lu, Y+%lu\n", &val1, &val2);
-    Button button_A{.step_x = val1, .step_y = val2, .cost = 3};
-    ++line_idx;
-    std::sscanf(lines[line_idx].data(), "Button B: X+%lu, Y+%lu\n", &val1, &val2);
-    ++line_idx;
-    Button button_B{.step_x = val1, .step_y = val2, .cost = 1};
-    std::sscanf(lines[line_idx].data(), "Prize: X=%lu, Y=%lu\n", &val1, &val2);
-    ++line_idx;
-    games.emplace_back(button_A, button_B, val1, val2);
+    if (line_idx != 0) {
+      ASSERT(lines[line_idx++] == "");
+    }
+
+    auto [step_x_A, step_y_A] =
+        scn::scan<std::uint64_t, std::uint64_t>(lines[line_idx++],
+                                                "Button A: X+{}, Y+{}")
+            ->values();
+    auto [step_x_B, step_y_B] =
+        scn::scan<std::uint64_t, std::uint64_t>(lines[line_idx++],
+                                                "Button B: X+{}, Y+{}")
+            ->values();
+    auto [prize_x, prize_y] =
+        scn::scan<std::uint64_t, std::uint64_t>(lines[line_idx++],
+                                                "Prize: X={}, Y={}")
+            ->values();
+    games.emplace_back(Button{step_x_A, step_y_A, 3},
+                       Button{step_x_B, step_y_B, 1},
+                       prize_x,
+                       prize_y);
   }
   return games;
 }
+
 std::uint64_t
 min_num_tokens(Game const &game) {
+  auto cmp = [](Position const &pos1, Position const &pos2) {
+    return pos1.cost > pos2.cost;
+  };
+  std::priority_queue<Position, std::vector<Position>, decltype(cmp)> positions(
+      cmp);
+  positions.emplace(game.prize_x, game.prize_y, 0);
+
+  while (!positions.empty()) {
+    auto top = positions.top();
+    fmt::println("{} {} {}", top.x, top.y, top.cost);
+    positions.pop();
+    if (top.x == 0 && top.y == 0) {
+      return top.cost;
+    }
+
+    if (top.x >= game.button_A.step_x && top.y >= game.button_A.step_y) {
+      positions.emplace(top.x - game.button_A.step_x,
+                        top.y - game.button_A.step_y,
+                        top.cost + game.button_A.cost);
+    }
+    if (top.x >= game.button_B.step_x && top.y >= game.button_B.step_y) {
+      positions.emplace(top.x - game.button_B.step_x,
+                        top.y - game.button_B.step_y,
+                        top.cost + game.button_B.cost);
+    }
+  }
+
   return 0;
 }
 } // namespace
