@@ -107,4 +107,9 @@ public:
       fmt::println("");
     }
   }
+
+  void
+  clear(T val = T()) {
+    std::fill_n(m_data, m_rows * m_cols, val);
+  }
 };
