@@ -14,45 +14,6 @@
 #include "matrix.hpp"
 #include "utility.hpp"
 
-struct Location
-{
-  std::size_t row;
-  std::size_t col;
-};
-
-/// we need the operator==() to resolve hash collisions
-bool
-operator==(Location const &lhs, Location const &rhs) {
-  return lhs.row == rhs.row && lhs.col == rhs.col;
-}
-
-/// we can use the hash_combine variadic-template function, to combine multiple
-/// hashes into a single one
-template <typename T, typename... Rest>
-constexpr void
-hash_combine(std::size_t &seed, T const &val, Rest const &...rest) {
-  constexpr size_t hash_mask{0x9e3779b9};
-  constexpr size_t lsh{6};
-  constexpr size_t rsh{2};
-  seed ^= std::hash<T>{}(val) + hash_mask + (seed << lsh) + (seed >> rsh);
-  (hash_combine(seed, rest), ...);
-}
-
-/// custom specialization of std::hash injected in namespace std
-template <>
-struct std::hash<Location>
-{
-  std::size_t
-  operator()(Location const &loc) const noexcept {
-    std::size_t h1 = std::hash<std::size_t>{}(loc.row);
-    std::size_t h2 = std::hash<std::size_t>{}(loc.col);
-
-    std::size_t ret_val = 0;
-    hash_combine(ret_val, h1, h2);
-    return ret_val;
-  }
-};
-
 namespace
 {
 void

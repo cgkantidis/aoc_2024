@@ -77,6 +77,7 @@ set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 add_library(utility src/utility.cpp)
 target_add_warnings(utility)
+target_link_libraries(utility PRIVATE libassert::assert)
 
 function(add_aoc_target target)
   if(EXISTS src/${target}.cpp)
