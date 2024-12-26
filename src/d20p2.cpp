@@ -37,19 +37,11 @@ find_shortest_path_length_dij(Location start,
                               Matrix<char> const &grid);
 void
 find_shortest_path_length_dij_with_cheat(
-    Location finish,
     Matrix<char> &grid,
     std::unordered_map<Location, std::uint64_t> const &cost_map,
     std::size_t cl /*cheat_length*/,
-    std::uint64_t max_cost,
     std::uint64_t min_save,
     std::uint64_t &num_cheats);
-std::uint64_t
-find_shortest_path_length_dij_with_cheat_int(
-    Location finish,
-    Matrix<char> const &grid,
-    std::unordered_map<Location, std::uint64_t> cost_map,
-    pq &to_visit);
 void
 reset_grid(Location start, Location finish, Matrix<char> &grid);
 } // namespace
@@ -150,11 +142,9 @@ get_num_cheats(std::ranges::range auto &&lines,
 
   std::vector<std::uint64_t> num_cheats(max_cheat);
   for (std::uint64_t cl = 1; cl <= max_cheat; ++cl) {
-    find_shortest_path_length_dij_with_cheat(finish,
-                                             std::ref(grid),
+    find_shortest_path_length_dij_with_cheat(std::ref(grid),
                                              std::ref(cost_map),
                                              cl + 1,
-                                             max_cost,
                                              min_save,
                                              std::ref(num_cheats[cl - 1]));
   }
@@ -234,11 +224,9 @@ find_shortest_path_length_dij(Location start,
 
 void
 find_shortest_path_length_dij_with_cheat(
-    Location finish,
     Matrix<char> &grid,
     std::unordered_map<Location, std::uint64_t> const &cost_map,
     std::size_t cl /*cheat_length*/,
-    std::uint64_t max_cost,
     std::uint64_t min_save,
     std::uint64_t &num_cheats) {
   pq to_visit(cmp);
@@ -252,89 +240,47 @@ find_shortest_path_length_dij_with_cheat(
       for (std::size_t hc = 0; hc <= cl; ++hc) { // horizontal cheat
         std::size_t vc = cl - hc; // vertical cheat
         if (cs.row >= vc && cs.col >= hc) {
-          if (grid(cs.row - vc, cs.col - hc) != '#') {
-            ces.emplace(cs.row - vc, cs.col - hc);
+          auto ce = Location(cs.row - vc, cs.col - hc);
+          if (grid(ce) != '#') {
+            ces.emplace(ce);
           }
         }
         if (cs.row >= vc && cs.col + hc < grid.cols()) {
-          if (grid(cs.row - vc, cs.col + hc) != '#') {
-            ces.emplace(cs.row - vc, cs.col + hc);
+          auto ce = Location(cs.row - vc, cs.col + hc);
+          if (grid(ce) != '#') {
+            ces.emplace(ce);
           }
         }
         if (cs.row + vc < grid.rows() && cs.col >= hc) {
-          if (grid(cs.row + vc, cs.col - hc) != '#') {
-            ces.emplace(cs.row + vc, cs.col - hc);
+          auto ce = Location(cs.row + vc, cs.col - hc);
+          if (grid(ce) != '#') {
+            ces.emplace(ce);
           }
         }
         if (cs.row + vc < grid.rows() && cs.col + hc < grid.cols()) {
-          if (grid(cs.row + vc, cs.col + hc) != '#') {
-            ces.emplace(cs.row + vc, cs.col + hc);
+          auto ce = Location(cs.row + vc, cs.col + hc);
+          if (grid(ce) != '#') {
+            ces.emplace(ce);
           }
         }
       }
 
       for (Location const &ce : ces) {
-        ASSERT(to_visit.empty());
-        to_visit.emplace(ce, cost_map.find(cs)->second + cl);
-        auto cost = find_shortest_path_length_dij_with_cheat_int(finish,
-                                                                 grid,
-                                                                 cost_map,
-                                                                 to_visit);
-        ASSERT(cost <= max_cost);
-        if (max_cost - cost >= min_save) {
-          fmt::println("({},{})->({},{}) cl={} saves {}", row, col, cs.row, cs.col, cl, max_cost - cost);
+        auto cs_cost = cost_map.find(cs)->second;
+        auto ce_cost = cost_map.find(ce)->second;
+        if (ce_cost > cs_cost + cl && ce_cost - (cs_cost + cl) >= min_save) {
+          fmt::println("({},{})->({},{}) cl={} saves {}",
+                       row,
+                       col,
+                       ce.row,
+                       ce.col,
+                       cl,
+                       ce_cost - (cs_cost + cl));
           ++num_cheats;
         }
       }
     }
   }
-}
-
-std::uint64_t
-find_shortest_path_length_dij_with_cheat_int(
-    Location finish,
-    Matrix<char> const &grid,
-    std::unordered_map<Location, std::uint64_t> cost_map,
-    pq &to_visit) {
-  while (!to_visit.empty()) {
-    auto [top, cost] = to_visit.top();
-    auto [row, col] = top;
-    to_visit.pop();
-
-    if (top == finish) {
-      while (!to_visit.empty()) {
-        to_visit.pop();
-      }
-      return cost;
-    }
-
-    if (cost >= cost_map[top]) {
-      continue;
-    }
-
-    // mark as visited
-    cost_map[top] = cost;
-
-    for (auto nloc : {Location{row - 1, col},
-                      Location{row + 1, col},
-                      Location{row, col - 1},
-                      Location{row, col + 1}}) {
-      auto [nrow, ncol] = nloc;
-      if (grid(nrow, ncol) == '#') {
-        continue;
-      }
-      auto find_it = cost_map.find(nloc);
-      if (find_it == cost_map.end() || find_it->second > cost + 1) {
-        to_visit.emplace(nloc, cost + 1);
-      }
-    }
-  }
-
-  auto find_it = cost_map.find(finish);
-  if (find_it != cost_map.end()) {
-    return find_it->second;
-  }
-  UNREACHABLE("there should always be a path");
 }
 
 void
