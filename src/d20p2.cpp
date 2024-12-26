@@ -7,7 +7,7 @@
 #include <queue> // std::priority_queue
 #include <ranges> // std::views::enumerate
 #include <string> // std::string
-#include <thread> // std::thread
+#include <thread>
 #include <unordered_map> // std::unordered_map
 #include <unordered_set> // std::unordered_set
 #include <vector> // std::vector
@@ -42,6 +42,8 @@ find_shortest_path_length_dij_with_cheat(
     std::size_t cl /*cheat_length*/,
     std::uint64_t min_save,
     std::uint64_t &num_cheats);
+void
+reset_grid(Matrix<char> &grid);
 void
 reset_grid(Location start, Location finish, Matrix<char> &grid);
 } // namespace
@@ -97,18 +99,18 @@ tests() {
     auto [start, finish, grid] = parse_map(lines);
     auto len_dij = find_shortest_path_length_dij(start, finish, grid);
     ASSERT(len_dij.first == 84);
-    ASSERT(get_num_cheats(lines, 64, 1) == 1);
-    ASSERT(get_num_cheats(lines, 40, 1) == 2);
-    ASSERT(get_num_cheats(lines, 38, 1) == 3);
-    ASSERT(get_num_cheats(lines, 36, 1) == 4);
-    ASSERT(get_num_cheats(lines, 20, 1) == 5);
-    ASSERT(get_num_cheats(lines, 12, 1) == 8);
-    ASSERT(get_num_cheats(lines, 10, 1) == 10);
-    ASSERT(get_num_cheats(lines, 8, 1) == 14);
-    ASSERT(get_num_cheats(lines, 6, 1) == 16);
-    ASSERT(get_num_cheats(lines, 4, 1) == 30);
-    ASSERT(get_num_cheats(lines, 2, 1) == 44);
-    ASSERT(get_num_cheats(lines, 1, 1) == 44);
+    ASSERT(get_num_cheats(lines, 64, 2) == 1);
+    ASSERT(get_num_cheats(lines, 40, 2) == 2);
+    ASSERT(get_num_cheats(lines, 38, 2) == 3);
+    ASSERT(get_num_cheats(lines, 36, 2) == 4);
+    ASSERT(get_num_cheats(lines, 20, 2) == 5);
+    ASSERT(get_num_cheats(lines, 12, 2) == 8);
+    ASSERT(get_num_cheats(lines, 10, 2) == 10);
+    ASSERT(get_num_cheats(lines, 8, 2) == 14);
+    ASSERT(get_num_cheats(lines, 6, 2) == 16);
+    ASSERT(get_num_cheats(lines, 4, 2) == 30);
+    ASSERT(get_num_cheats(lines, 2, 2) == 44);
+    ASSERT(get_num_cheats(lines, 1, 2) == 44);
 
     ASSERT(get_num_cheats(lines, 76, 20) == 3);
     ASSERT(get_num_cheats(lines, 74, 20) == 3 + 4);
@@ -139,15 +141,17 @@ get_num_cheats(std::ranges::range auto &&lines,
                std::uint64_t max_cheat) {
   auto [start, finish, grid] = parse_map(lines);
   auto [max_cost, cost_map] = find_shortest_path_length_dij(start, finish, grid);
-
+  std::vector<std::thread> threads;
   std::vector<std::uint64_t> num_cheats(max_cheat);
-  for (std::uint64_t cl = 1; cl <= max_cheat; ++cl) {
-    find_shortest_path_length_dij_with_cheat(std::ref(grid),
-                                             std::ref(cost_map),
-                                             cl + 1,
-                                             min_save,
-                                             std::ref(num_cheats[cl - 1]));
+  for (std::uint64_t cl = 1; cl < max_cheat; ++cl) {
+    threads.emplace_back(find_shortest_path_length_dij_with_cheat,
+                         std::ref(grid),
+                         std::ref(cost_map),
+                         cl + 1,
+                         min_save,
+                         std::ref(num_cheats[cl - 1]));
   }
+  std::ranges::for_each(threads, &std::thread::join);
   return std::ranges::fold_left(num_cheats, 0ULL, std::plus<std::uint64_t>{});
 }
 
@@ -266,18 +270,23 @@ find_shortest_path_length_dij_with_cheat(
       }
 
       for (Location const &ce : ces) {
+        grid(ce) = 'O';
         auto cs_cost = cost_map.find(cs)->second;
         auto ce_cost = cost_map.find(ce)->second;
         if (ce_cost > cs_cost + cl && ce_cost - (cs_cost + cl) >= min_save) {
-          fmt::println("({},{})->({},{}) cl={} saves {}",
-                       row,
-                       col,
-                       ce.row,
-                       ce.col,
-                       cl,
-                       ce_cost - (cs_cost + cl));
           ++num_cheats;
         }
+      }
+    }
+  }
+}
+
+void
+reset_grid(Matrix<char> &grid) {
+  for (std::size_t row{}; row < grid.rows(); ++row) {
+    for (std::size_t col{}; col < grid.cols(); ++col) {
+      if (grid(row, col) != '#') {
+        grid(row, col) = ' ';
       }
     }
   }

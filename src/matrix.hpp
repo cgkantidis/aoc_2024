@@ -1,5 +1,9 @@
+#ifndef MATRIX_HPP
+#define MATRIX_HPP
+
 #include "fmt/core.h" // fmt::print
 #include "libassert/assert.hpp"
+#include "utility.hpp" // Location
 #include <algorithm> // std::copy_n
 #include <cstdint> // std::size_t
 
@@ -98,6 +102,18 @@ public:
     DEBUG_ASSERT(col < m_cols);
     return m_data[(row * m_cols) + col];
   }
+  T const &
+  operator()(Location loc) const {
+    DEBUG_ASSERT(loc.row < m_rows);
+    DEBUG_ASSERT(loc.col < m_cols);
+    return m_data[(loc.row * m_cols) + loc.col];
+  }
+  T &
+  operator()(Location loc) {
+    DEBUG_ASSERT(loc.row < m_rows);
+    DEBUG_ASSERT(loc.col < m_cols);
+    return m_data[(loc.row * m_cols) + loc.col];
+  }
   void
   print() const {
     for (std::size_t row = 0; row < m_rows; ++row) {
@@ -113,3 +129,5 @@ public:
     std::fill_n(m_data, m_rows * m_cols, val);
   }
 };
+
+#endif
