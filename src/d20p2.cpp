@@ -149,21 +149,14 @@ get_num_cheats(std::ranges::range auto &&lines,
   auto [max_cost, cost_map] = find_shortest_path_length_dij(start, finish, grid);
 
   std::vector<std::uint64_t> num_cheats(max_cheat);
-  std::vector<std::thread> threads;
   for (std::uint64_t cl = 1; cl <= max_cheat; ++cl) {
-    threads.emplace_back(find_shortest_path_length_dij_with_cheat,
-                         finish,
-                         std::ref(grid),
-                         std::ref(cost_map),
-                         cl + 1,
-                         max_cost,
-                         min_save,
-                         std::ref(num_cheats[cl - 1]));
-  }
-  std::uint64_t cl = 1;
-  for (std::thread &t : threads) {
-    fmt::println("{}", cl++);
-    t.join();
+    find_shortest_path_length_dij_with_cheat(finish,
+                                             std::ref(grid),
+                                             std::ref(cost_map),
+                                             cl + 1,
+                                             max_cost,
+                                             min_save,
+                                             std::ref(num_cheats[cl - 1]));
   }
   return std::ranges::fold_left(num_cheats, 0ULL, std::plus<std::uint64_t>{});
 }
@@ -289,6 +282,7 @@ find_shortest_path_length_dij_with_cheat(
                                                                  to_visit);
         ASSERT(cost <= max_cost);
         if (max_cost - cost >= min_save) {
+          fmt::println("({},{})->({},{}) cl={} saves {}", row, col, cs.row, cs.col, cl, max_cost - cost);
           ++num_cheats;
         }
       }
