@@ -11,47 +11,6 @@
 
 #include "matrix.hpp"
 
-static constexpr auto UNINIT = std::numeric_limits<unsigned>::max();
-
-struct Plot
-{
-  std::size_t row;
-  std::size_t col;
-};
-
-/// we need the operator==() to resolve hash collisions
-bool
-operator==(Plot const &lhs, Plot const &rhs) {
-  return lhs.row == rhs.row && lhs.col == rhs.col;
-}
-
-/// we can use the hash_combine variadic-template function, to combine multiple
-/// hashes into a single one
-template <typename T, typename... Rest>
-constexpr void
-hash_combine(std::size_t &seed, T const &val, Rest const &...rest) {
-  constexpr size_t hash_mask{0x9e3779b9};
-  constexpr size_t lsh{6};
-  constexpr size_t rsh{2};
-  seed ^= std::hash<T>{}(val) + hash_mask + (seed << lsh) + (seed >> rsh);
-  (hash_combine(seed, rest), ...);
-}
-
-/// custom specialization of std::hash injected in namespace std
-template <>
-struct std::hash<Plot>
-{
-  std::size_t
-  operator()(Plot const &s) const noexcept {
-    std::size_t h1 = std::hash<std::size_t>{}(s.row);
-    std::size_t h2 = std::hash<std::size_t>{}(s.col);
-
-    std::size_t ret_val = 0;
-    hash_combine(ret_val, h1, h2);
-    return ret_val;
-  }
-};
-
 namespace
 {
 void
@@ -65,23 +24,23 @@ visit_all_regions(Matrix<char> const &grid);
 std::pair<std::uint64_t, std::uint64_t>
 region_area_and_perimenter(Matrix<char> const &grid,
                            Matrix<bool> &area_visited,
-                           Plot beg_plot);
+                           Location beg_plot);
 bool
-top_left_outer(Matrix<char> const &grid, Plot plot);
+top_left_outer(Matrix<char> const &grid, Location plot);
 bool
-bottom_left_outer(Matrix<char> const &grid, Plot plot);
+bottom_left_outer(Matrix<char> const &grid, Location plot);
 bool
-top_right_outer(Matrix<char> const &grid, Plot plot);
+top_right_outer(Matrix<char> const &grid, Location plot);
 bool
-bottom_right_outer(Matrix<char> const &grid, Plot plot);
+bottom_right_outer(Matrix<char> const &grid, Location plot);
 bool
-top_left_inner(Matrix<char> const &grid, Plot plot);
+top_left_inner(Matrix<char> const &grid, Location plot);
 bool
-bottom_left_inner(Matrix<char> const &grid, Plot plot);
+bottom_left_inner(Matrix<char> const &grid, Location plot);
 bool
-top_right_inner(Matrix<char> const &grid, Plot plot);
+top_right_inner(Matrix<char> const &grid, Location plot);
 bool
-bottom_right_inner(Matrix<char> const &grid, Plot plot);
+bottom_right_inner(Matrix<char> const &grid, Location plot);
 } // namespace
 
 int
@@ -192,7 +151,7 @@ visit_all_regions(Matrix<char> const &grid) {
         continue;
       }
       auto [area, perimeter] =
-          region_area_and_perimenter(grid, area_visited, Plot{row, col});
+          region_area_and_perimenter(grid, area_visited, Location{row, col});
       total_cost += area * perimeter;
     }
   }
@@ -202,11 +161,11 @@ visit_all_regions(Matrix<char> const &grid) {
 std::pair<std::uint64_t, std::uint64_t>
 region_area_and_perimenter(Matrix<char> const &grid,
                            Matrix<bool> &area_visited,
-                           Plot beg_plot) {
+                           Location beg_plot) {
   std::uint64_t area{};
   std::uint64_t perimeter{};
 
-  std::unordered_set<Plot> to_visit;
+  std::unordered_set<Location> to_visit;
   to_visit.emplace(beg_plot);
 
   while (!to_visit.empty()) {
@@ -269,35 +228,35 @@ region_area_and_perimenter(Matrix<char> const &grid,
 }
 
 bool
-top_left_outer(Matrix<char> const &grid, Plot plot) {
+top_left_outer(Matrix<char> const &grid, Location plot) {
   auto [row, col] = plot;
   auto p = grid(row, col);
   return grid(row, col - 1) != p && grid(row - 1, col) != p;
 }
 
 bool
-bottom_left_outer(Matrix<char> const &grid, Plot plot) {
+bottom_left_outer(Matrix<char> const &grid, Location plot) {
   auto [row, col] = plot;
   auto p = grid(row, col);
   return grid(row, col - 1) != p && grid(row + 1, col) != p;
 }
 
 bool
-top_right_outer(Matrix<char> const &grid, Plot plot) {
+top_right_outer(Matrix<char> const &grid, Location plot) {
   auto [row, col] = plot;
   auto p = grid(row, col);
   return grid(row, col + 1) != p && grid(row - 1, col) != p;
 }
 
 bool
-bottom_right_outer(Matrix<char> const &grid, Plot plot) {
+bottom_right_outer(Matrix<char> const &grid, Location plot) {
   auto [row, col] = plot;
   auto p = grid(row, col);
   return grid(row, col + 1) != p && grid(row + 1, col) != p;
 }
 
 bool
-top_left_inner(Matrix<char> const &grid, Plot plot) {
+top_left_inner(Matrix<char> const &grid, Location plot) {
   auto [row, col] = plot;
   auto p = grid(row, col);
   return grid(row, col + 1) == p && grid(row + 1, col) == p
@@ -305,7 +264,7 @@ top_left_inner(Matrix<char> const &grid, Plot plot) {
 }
 
 bool
-bottom_left_inner(Matrix<char> const &grid, Plot plot) {
+bottom_left_inner(Matrix<char> const &grid, Location plot) {
   auto [row, col] = plot;
   auto p = grid(row, col);
   return grid(row, col + 1) == p && grid(row - 1, col) == p
@@ -313,7 +272,7 @@ bottom_left_inner(Matrix<char> const &grid, Plot plot) {
 }
 
 bool
-top_right_inner(Matrix<char> const &grid, Plot plot) {
+top_right_inner(Matrix<char> const &grid, Location plot) {
   auto [row, col] = plot;
   auto p = grid(row, col);
   return grid(row, col - 1) == p && grid(row + 1, col) == p
@@ -321,7 +280,7 @@ top_right_inner(Matrix<char> const &grid, Plot plot) {
 }
 
 bool
-bottom_right_inner(Matrix<char> const &grid, Plot plot) {
+bottom_right_inner(Matrix<char> const &grid, Location plot) {
   auto [row, col] = plot;
   auto p = grid(row, col);
   return grid(row, col - 1) == p && grid(row - 1, col) == p

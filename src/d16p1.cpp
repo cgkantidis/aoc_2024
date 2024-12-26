@@ -13,12 +13,6 @@
 
 #include "matrix.hpp"
 
-struct Location
-{
-  std::size_t row;
-  std::size_t col;
-};
-
 enum Direction : unsigned
 {
   UP,
@@ -67,24 +61,8 @@ struct State
 
 /// we need the operator==() to resolve hash collisions
 bool
-operator==(Location const &lhs, Location const &rhs) {
-  return lhs.row == rhs.row && lhs.col == rhs.col;
-}
-bool
 operator==(State const &lhs, State const &rhs) {
   return lhs.loc == rhs.loc && lhs.dir == rhs.dir;
-}
-
-/// we can use the hash_combine variadic-template function, to combine multiple
-/// hashes into a single one
-template <typename T, typename... Rest>
-constexpr void
-hash_combine(std::size_t &seed, T const &val, Rest const &...rest) {
-  constexpr size_t hash_mask{0x9e3779b9};
-  constexpr size_t lsh{6};
-  constexpr size_t rsh{2};
-  seed ^= std::hash<T>{}(val) + hash_mask + (seed << lsh) + (seed >> rsh);
-  (hash_combine(seed, rest), ...);
 }
 
 /// custom specialization of std::hash injected in namespace std

@@ -26,50 +26,6 @@ static constexpr std::initializer_list<Dir> ALL_DIRS{Dir::UP,
                                                      Dir::DOWN,
                                                      Dir::RIGHT};
 
-struct Point
-{
-  std::size_t row;
-  std::size_t col;
-
-  bool
-  operator<(Point const &other) const {
-    return row < other.row || col < other.col;
-  }
-};
-
-/// we need the operator==() to resolve hash collisions
-bool
-operator==(Point const &lhs, Point const &rhs) {
-  return lhs.row == rhs.row && lhs.col == rhs.col;
-}
-
-/// we can use the hash_combine variadic-template function, to combine multiple
-/// hashes into a single one
-template <typename T, typename... Rest>
-constexpr void
-hash_combine(std::size_t &seed, T const &val, Rest const &...rest) {
-  constexpr size_t hash_mask{0x9e3779b9};
-  constexpr size_t lsh{6};
-  constexpr size_t rsh{2};
-  seed ^= std::hash<T>{}(val) + hash_mask + (seed << lsh) + (seed >> rsh);
-  (hash_combine(seed, rest), ...);
-}
-
-/// custom specialization of std::hash injected in namespace std
-template <>
-struct std::hash<Point>
-{
-  std::size_t
-  operator()(Point const &s) const noexcept {
-    std::size_t h1 = std::hash<std::size_t>{}(s.row);
-    std::size_t h2 = std::hash<std::size_t>{}(s.col);
-
-    std::size_t ret_val = 0;
-    hash_combine(ret_val, h1, h2);
-    return ret_val;
-  }
-};
-
 namespace
 {
 void
@@ -198,11 +154,11 @@ get_trailhead_rating(Matrix<unsigned> const &grid,
                      std::size_t head_col) {
   std::uint64_t rating{};
 
-  std::vector<Point> trail;
+  std::vector<Location> trail;
   trail.emplace_back(head_row, head_col);
 
   while (!trail.empty()) {
-    Point tail = trail.back();
+    Location tail = trail.back();
     trail.pop_back();
 
     std::size_t row = tail.row;

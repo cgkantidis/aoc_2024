@@ -11,8 +11,6 @@
 
 #include "matrix.hpp"
 
-static constexpr auto UNINIT = std::numeric_limits<unsigned>::max();
-
 namespace
 {
 void
@@ -29,46 +27,6 @@ visit_region(Matrix<char> const &grid,
              std::size_t beg_row,
              std::size_t beg_col);
 } // namespace
-
-struct Plot
-{
-  std::size_t row;
-  std::size_t col;
-};
-
-/// we need the operator==() to resolve hash collisions
-bool
-operator==(Plot const &lhs, Plot const &rhs) {
-  return lhs.row == rhs.row && lhs.col == rhs.col;
-}
-
-/// we can use the hash_combine variadic-template function, to combine multiple
-/// hashes into a single one
-template <typename T, typename... Rest>
-constexpr void
-hash_combine(std::size_t &seed, T const &val, Rest const &...rest) {
-  constexpr size_t hash_mask{0x9e3779b9};
-  constexpr size_t lsh{6};
-  constexpr size_t rsh{2};
-  seed ^= std::hash<T>{}(val) + hash_mask + (seed << lsh) + (seed >> rsh);
-  (hash_combine(seed, rest), ...);
-}
-
-/// custom specialization of std::hash injected in namespace std
-template <>
-struct std::hash<Plot>
-{
-  std::size_t
-  operator()(Plot const &s) const noexcept {
-    std::size_t h1 = std::hash<std::size_t>{}(s.row);
-    std::size_t h2 = std::hash<std::size_t>{}(s.col);
-
-    std::size_t ret_val = 0;
-    hash_combine(ret_val, h1, h2);
-    return ret_val;
-  }
-};
-
 
 int
 main(int argc, char const *const *argv) {
@@ -176,7 +134,7 @@ visit_region(Matrix<char> const &grid,
   std::uint64_t area{};
   std::uint64_t perimeter{};
 
-  std::unordered_set<Plot> to_visit;
+  std::unordered_set<Location> to_visit;
   to_visit.emplace(beg_row, beg_col);
 
   while (!to_visit.empty()) {
