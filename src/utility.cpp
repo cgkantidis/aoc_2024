@@ -49,3 +49,18 @@ pow10(std::uint8_t exp) {
   }
   return val;
 }
+
+bool
+operator==(Location const &lhs, Location const &rhs) {
+  return lhs.row == rhs.row && lhs.col == rhs.col;
+}
+
+std::size_t
+std::hash<Location>::operator()(Location const &loc) const noexcept {
+  std::size_t h1 = std::hash<std::size_t>{}(loc.row);
+  std::size_t h2 = std::hash<std::size_t>{}(loc.col);
+
+  std::size_t ret_val = 0;
+  hash_combine(ret_val, h1, h2);
+  return ret_val;
+}

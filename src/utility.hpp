@@ -43,15 +43,7 @@ struct Location
 
 /// we need the operator==() to resolve hash collisions
 bool
-operator==(Location const &lhs, Location const &rhs) {
-  return lhs.row == rhs.row && lhs.col == rhs.col;
-}
-bool
-operator==(std::pair<Location, Location> const &lhs,
-           std::pair<Location, Location> const &rhs) {
-  return lhs.first.row == rhs.first.row && lhs.first.col == rhs.first.col
-         && lhs.second.row == rhs.second.row && lhs.second.col == rhs.second.col;
-}
+operator==(Location const &lhs, Location const &rhs);
 
 /// we can use the hash_combine variadic-template function, to combine multiple
 /// hashes into a single one
@@ -70,27 +62,19 @@ template <>
 struct std::hash<Location>
 {
   std::size_t
-  operator()(Location const &loc) const noexcept {
-    std::size_t h1 = std::hash<std::size_t>{}(loc.row);
-    std::size_t h2 = std::hash<std::size_t>{}(loc.col);
+  operator()(Location const &loc) const noexcept;
+};
+
+template <typename T, typename U>
+struct std::hash<std::pair<T, U>>
+{
+  std::size_t
+  operator()(std::pair<T, U> const &pair) const noexcept {
+    std::size_t h1 = std::hash<std::size_t>{}(pair.first);
+    std::size_t h2 = std::hash<std::size_t>{}(pair.second);
 
     std::size_t ret_val = 0;
     hash_combine(ret_val, h1, h2);
-    return ret_val;
-  }
-};
-template <>
-struct std::hash<std::pair<Location, Location>>
-{
-  std::size_t
-  operator()(std::pair<Location, Location> const &loc_pair) const noexcept {
-    std::size_t h1 = std::hash<std::size_t>{}(loc_pair.first.row);
-    std::size_t h2 = std::hash<std::size_t>{}(loc_pair.first.col);
-    std::size_t h3 = std::hash<std::size_t>{}(loc_pair.second.row);
-    std::size_t h4 = std::hash<std::size_t>{}(loc_pair.second.col);
-
-    std::size_t ret_val = 0;
-    hash_combine(ret_val, h1, h2, h3, h4);
     return ret_val;
   }
 };
