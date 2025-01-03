@@ -51,8 +51,6 @@ get_num_moves(std::string_view line,
               Matrix<char> const &keypad2);
 Matrix<char>
 parse_keypad(std::ranges::range auto &&lines);
-void
-append_range(std::vector<char> &dst, std::vector<char> const &src);
 std::vector<std::vector<char>>
 all_shortest_paths(char src,
                    char dst,
@@ -212,11 +210,6 @@ parse_keypad(std::ranges::range auto &&lines) {
     }
   }
   return grid;
-}
-
-void
-append_range(std::vector<char> &dst, std::vector<char> const &src) {
-  dst.insert(dst.end(), src.cbegin(), src.cend());
 }
 
 std::vector<std::vector<char>>

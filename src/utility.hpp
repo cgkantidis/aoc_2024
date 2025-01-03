@@ -29,6 +29,12 @@ str_to_int(std::string_view sv) {
 std::vector<std::string_view>
 split(std::string_view sv, std::string_view delim = " ");
 
+template<typename T>
+void
+append_range(std::vector<T> &dst, std::vector<T> const &src) {
+  dst.insert(dst.end(), src.cbegin(), src.cend());
+}
+
 std::uint8_t
 get_num_digits(std::uint64_t num);
 
