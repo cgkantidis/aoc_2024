@@ -26,9 +26,15 @@ FetchContent_Declare(
   GIT_TAG main
   OVERRIDE_FIND_PACKAGE
 )
+FetchContent_Declare(
+  bshoshany_thread_pool
+  GIT_REPOSITORY https://github.com/bshoshany/thread-pool.git
+  OVERRIDE_FIND_PACKAGE
+)
 find_package(fmt REQUIRED)
 find_package(scn REQUIRED)
 find_package(libassert REQUIRED)
+find_package(bshoshany_thread_pool REQUIRED)
 
 function(target_add_warnings target)
   # enable all warnings
@@ -79,6 +85,9 @@ add_library(utility src/utility.cpp)
 target_add_warnings(utility)
 target_link_libraries(utility PRIVATE libassert::assert)
 
+add_library(BS_thread_pool INTERFACE)
+target_include_directories(BS_thread_pool INTERFACE ${bshoshany_thread_pool_SOURCE_DIR}/include)
+
 function(add_aoc_target target)
   if(EXISTS src/${target}.cpp)
     add_executable(${target} src/${target}.cpp)
@@ -86,7 +95,7 @@ function(add_aoc_target target)
     target_add_link_options(${target})
     # enable whole-program optimizations
     target_compile_options(${target} PRIVATE -fwhole-program)
-    target_link_libraries(${target} PRIVATE fmt::fmt scn::scn libassert::assert utility)
+    target_link_libraries(${target} PRIVATE fmt::fmt scn::scn libassert::assert utility BS_thread_pool)
   endif()
 endfunction()
 
