@@ -51,12 +51,20 @@ get_num_moves(std::string_view line,
               Matrix<char> const &keypad2);
 Matrix<char>
 parse_keypad(std::ranges::range auto &&lines);
-std::vector<char>
-moves_for_path(char src,
-               char dst,
-               Matrix<char> const &keypad1,
-               Matrix<char> const &keypad2,
-               u64 depth);
+void
+append_range(std::vector<char> &dst, std::vector<char> const &src);
+std::vector<std::vector<char>>
+all_shortest_paths(char src,
+                   char dst,
+                   Matrix<char> const &keypad1,
+                   Matrix<char> const &keypad2,
+                   u64 depth);
+std::pair<std::vector<char>, u64>
+get_path_with_min_cost(char src,
+                       char dst,
+                       Matrix<char> const &keypad1,
+                       Matrix<char> const &keypad2,
+                       u64 depth);
 } // namespace
 
 int
@@ -88,6 +96,55 @@ namespace
 {
 void
 tests() {
+  auto const keypad1 = parse_keypad(keypad1_lines);
+  auto const keypad2 = parse_keypad(keypad2_lines);
+
+  ASSERT(get_path_with_min_cost('A', '^', keypad1, keypad2, 0).second == 2);
+  ASSERT(get_path_with_min_cost('A', '>', keypad1, keypad2, 0).second == 2);
+  ASSERT(get_path_with_min_cost('A', 'v', keypad1, keypad2, 0).second == 3);
+  ASSERT(get_path_with_min_cost('A', '<', keypad1, keypad2, 0).second == 4);
+  ASSERT(get_path_with_min_cost('>', 'A', keypad1, keypad2, 0).second == 2);
+  ASSERT(get_path_with_min_cost('>', '^', keypad1, keypad2, 0).second == 3);
+  ASSERT(get_path_with_min_cost('>', 'v', keypad1, keypad2, 0).second == 2);
+  ASSERT(get_path_with_min_cost('>', '<', keypad1, keypad2, 0).second == 3);
+  ASSERT(get_path_with_min_cost('<', 'A', keypad1, keypad2, 0).second == 4);
+  ASSERT(get_path_with_min_cost('<', '^', keypad1, keypad2, 0).second == 3);
+  ASSERT(get_path_with_min_cost('<', 'v', keypad1, keypad2, 0).second == 2);
+  ASSERT(get_path_with_min_cost('<', '>', keypad1, keypad2, 0).second == 3);
+  ASSERT(get_path_with_min_cost('v', 'A', keypad1, keypad2, 0).second == 3);
+  ASSERT(get_path_with_min_cost('v', '^', keypad1, keypad2, 0).second == 2);
+  ASSERT(get_path_with_min_cost('v', '<', keypad1, keypad2, 0).second == 2);
+  ASSERT(get_path_with_min_cost('v', '>', keypad1, keypad2, 0).second == 2);
+  ASSERT(get_path_with_min_cost('^', 'A', keypad1, keypad2, 0).second == 2);
+  ASSERT(get_path_with_min_cost('^', 'v', keypad1, keypad2, 0).second == 2);
+  ASSERT(get_path_with_min_cost('^', '<', keypad1, keypad2, 0).second == 3);
+  ASSERT(get_path_with_min_cost('^', '>', keypad1, keypad2, 0).second == 3);
+  ASSERT(get_path_with_min_cost('A', '^', keypad1, keypad2, 1).second == 8);
+  ASSERT(get_path_with_min_cost('A', '>', keypad1, keypad2, 1).second == 6);
+  ASSERT(get_path_with_min_cost('A', 'v', keypad1, keypad2, 1).second == 9);
+  ASSERT(get_path_with_min_cost('A', '<', keypad1, keypad2, 1).second == 10);
+  ASSERT(get_path_with_min_cost('>', 'A', keypad1, keypad2, 1).second == 4);
+  ASSERT(get_path_with_min_cost('>', '^', keypad1, keypad2, 1).second == 9);
+  ASSERT(get_path_with_min_cost('>', 'v', keypad1, keypad2, 1).second == 8);
+  ASSERT(get_path_with_min_cost('>', '<', keypad1, keypad2, 1).second == 9);
+  ASSERT(get_path_with_min_cost('<', 'A', keypad1, keypad2, 1).second == 8);
+  ASSERT(get_path_with_min_cost('<', '^', keypad1, keypad2, 1).second == 7);
+  ASSERT(get_path_with_min_cost('<', 'v', keypad1, keypad2, 1).second == 4);
+  ASSERT(get_path_with_min_cost('<', '>', keypad1, keypad2, 1).second == 5);
+  ASSERT(get_path_with_min_cost('v', 'A', keypad1, keypad2, 1).second == 7);
+  ASSERT(get_path_with_min_cost('v', '^', keypad1, keypad2, 1).second == 4);
+  ASSERT(get_path_with_min_cost('v', '<', keypad1, keypad2, 1).second == 8);
+  ASSERT(get_path_with_min_cost('v', '>', keypad1, keypad2, 1).second == 4);
+  ASSERT(get_path_with_min_cost('^', 'A', keypad1, keypad2, 1).second == 4);
+  ASSERT(get_path_with_min_cost('^', 'v', keypad1, keypad2, 1).second == 6);
+  ASSERT(get_path_with_min_cost('^', '<', keypad1, keypad2, 1).second == 9);
+  ASSERT(get_path_with_min_cost('^', '>', keypad1, keypad2, 1).second == 7);
+  ASSERT(get_path_with_min_cost('A', '3', keypad1, keypad2, 2).second == 12);
+  ASSERT(get_path_with_min_cost('3', '7', keypad1, keypad2, 2).second == 23);
+  ASSERT(get_path_with_min_cost('7', '9', keypad1, keypad2, 2).second == 11);
+  ASSERT(get_path_with_min_cost('9', 'A', keypad1, keypad2, 2).second == 18);
+  ASSERT(get_path_with_min_cost('4', '0', keypad1, keypad2, 2).second == 22);
+
   {
     auto const lines = std::array{
         "029A"sv,
@@ -98,54 +155,6 @@ tests() {
     };
     ASSERT(get_sum_complexities(lines) == 126384);
   }
-  auto const keypad1 = parse_keypad(keypad1_lines);
-  auto const keypad2 = parse_keypad(keypad2_lines);
-  ASSERT(moves_for_path('A', '^', keypad1, keypad2, 0).size() == 2);
-  ASSERT(moves_for_path('A', '>', keypad1, keypad2, 0).size() == 2);
-  ASSERT(moves_for_path('A', 'v', keypad1, keypad2, 0).size() == 3);
-  ASSERT(moves_for_path('A', '<', keypad1, keypad2, 0).size() == 4);
-  ASSERT(moves_for_path('>', 'A', keypad1, keypad2, 0).size() == 2);
-  ASSERT(moves_for_path('>', '^', keypad1, keypad2, 0).size() == 3);
-  ASSERT(moves_for_path('>', 'v', keypad1, keypad2, 0).size() == 2);
-  ASSERT(moves_for_path('>', '<', keypad1, keypad2, 0).size() == 3);
-  ASSERT(moves_for_path('<', 'A', keypad1, keypad2, 0).size() == 4);
-  ASSERT(moves_for_path('<', '^', keypad1, keypad2, 0).size() == 3);
-  ASSERT(moves_for_path('<', 'v', keypad1, keypad2, 0).size() == 2);
-  ASSERT(moves_for_path('<', '>', keypad1, keypad2, 0).size() == 3);
-  ASSERT(moves_for_path('v', 'A', keypad1, keypad2, 0).size() == 3);
-  ASSERT(moves_for_path('v', '^', keypad1, keypad2, 0).size() == 2);
-  ASSERT(moves_for_path('v', '<', keypad1, keypad2, 0).size() == 2);
-  ASSERT(moves_for_path('v', '>', keypad1, keypad2, 0).size() == 2);
-  ASSERT(moves_for_path('^', 'A', keypad1, keypad2, 0).size() == 2);
-  ASSERT(moves_for_path('^', 'v', keypad1, keypad2, 0).size() == 2);
-  ASSERT(moves_for_path('^', '<', keypad1, keypad2, 0).size() == 3);
-  ASSERT(moves_for_path('^', '>', keypad1, keypad2, 0).size() == 3);
-
-  ASSERT(moves_for_path('A', '^', keypad1, keypad2, 1).size() == 8);
-  ASSERT(moves_for_path('A', '>', keypad1, keypad2, 1).size() == 6);
-  ASSERT(moves_for_path('A', 'v', keypad1, keypad2, 1).size() == 9);
-  ASSERT(moves_for_path('A', '<', keypad1, keypad2, 1).size() == 10);
-  ASSERT(moves_for_path('>', 'A', keypad1, keypad2, 1).size() == 4);
-  ASSERT(moves_for_path('>', '^', keypad1, keypad2, 1).size() == 9);
-  ASSERT(moves_for_path('>', 'v', keypad1, keypad2, 1).size() == 8);
-  ASSERT(moves_for_path('>', '<', keypad1, keypad2, 1).size() == 9);
-  ASSERT(moves_for_path('<', 'A', keypad1, keypad2, 1).size() == 8);
-  ASSERT(moves_for_path('<', '^', keypad1, keypad2, 1).size() == 7);
-  ASSERT(moves_for_path('<', 'v', keypad1, keypad2, 1).size() == 4);
-  ASSERT(moves_for_path('<', '>', keypad1, keypad2, 1).size() == 5);
-  ASSERT(moves_for_path('v', 'A', keypad1, keypad2, 1).size() == 7);
-  ASSERT(moves_for_path('v', '^', keypad1, keypad2, 1).size() == 4);
-  ASSERT(moves_for_path('v', '<', keypad1, keypad2, 1).size() == 8);
-  ASSERT(moves_for_path('v', '>', keypad1, keypad2, 1).size() == 4);
-  ASSERT(moves_for_path('^', 'A', keypad1, keypad2, 1).size() == 4);
-  ASSERT(moves_for_path('^', 'v', keypad1, keypad2, 1).size() == 6);
-  ASSERT(moves_for_path('^', '<', keypad1, keypad2, 1).size() == 9);
-  ASSERT(moves_for_path('^', '>', keypad1, keypad2, 1).size() == 7);
-
-  ASSERT(moves_for_path('A', '3', keypad1, keypad2, 2).size() == 12);
-  ASSERT(moves_for_path('3', '7', keypad1, keypad2, 2).size() == 23);
-  ASSERT(moves_for_path('7', '9', keypad1, keypad2, 2).size() == 11);
-  ASSERT(moves_for_path('9', 'A', keypad1, keypad2, 2).size() == 18);
 }
 
 u64
@@ -167,14 +176,18 @@ u64
 get_num_moves(std::string_view line,
               Matrix<char> const &keypad1,
               Matrix<char> const &keypad2) {
-  return moves_for_path('A', line[0], keypad1, keypad2, 2).size()
+  return get_path_with_min_cost('A', line[0], keypad1, keypad2, 2).second
          + std::ranges::fold_left(
              line | std::views::slide(2),
              0ULL,
              [&keypad1, &keypad2](u64 prev, auto const &window) {
                return prev
-                      + moves_for_path(window[0], window[1], keypad1, keypad2, 2)
-                            .size();
+                      + get_path_with_min_cost(window[0],
+                                               window[1],
+                                               keypad1,
+                                               keypad2,
+                                               2)
+                            .second;
              });
 }
 
@@ -206,34 +219,37 @@ append_range(std::vector<char> &dst, std::vector<char> const &src) {
   dst.insert(dst.end(), src.cbegin(), src.cend());
 }
 
-std::vector<char>
-moves_for_path(char src,
-               char dst,
-               Matrix<char> const &keypad1,
-               Matrix<char> const &keypad2,
-               u64 depth) {
+std::vector<std::vector<char>>
+all_shortest_paths(char src,
+                   char dst,
+                   Matrix<char> const &keypad1,
+                   Matrix<char> const &keypad2,
+                   u64 depth) {
   auto keypad = depth == 2 ? keypad1 : keypad2;
 
-  std::unordered_map<Location, std::pair<std::vector<char>, u64>> move_map;
-  std::queue<State> to_visit;
-  to_visit.emplace(find_key(src, keypad), std::vector<char>());
+  std::unordered_map<Location, std::vector<std::vector<char>>> shortest_paths;
+  std::queue<std::pair<Location, std::vector<char>>> to_visit;
+  to_visit.emplace(find_key(src, keypad), std::vector<char>{});
 
   while (!to_visit.empty()) {
-    auto [top, moves, cost] = to_visit.front();
-    auto [row, col] = top;
+    auto [loc, moves] = to_visit.front();
+    auto [row, col] = loc;
     to_visit.pop();
 
-    // mark as visited
-    auto find_it = move_map.find(top);
-    if (find_it != move_map.end()) {
-      if (find_it->second.second < cost) {
+    auto find_it = shortest_paths.find(loc);
+    if (find_it != shortest_paths.end()) {
+      if (moves.size() < find_it->second.front().size()) {
+        // we found a new shortest path
+        find_it->second.clear();
+        find_it->second.emplace_back(moves);
+      } else if (moves.size() == find_it->second.front().size()) {
+        // we found another shortest path
+        find_it->second.emplace_back(moves);
+      } else {
         continue;
       }
-      if (find_it->second.second > cost) {
-        move_map[top] = {moves, cost};
-      }
     } else {
-      move_map[top] = {moves, cost};
+      shortest_paths[loc] = {moves};
     }
 
     for (auto [nloc, nmove] : {
@@ -248,38 +264,44 @@ moves_for_path(char src,
 
       auto nmoves = moves;
       nmoves.emplace_back(nmove);
+      to_visit.emplace(nloc, nmoves);
+    }
+  }
+  return shortest_paths.find(find_key(dst, keypad))->second;
+}
 
-      if (depth == 0) {
-        to_visit.emplace(nloc, nmoves, nmoves.size());
-      } else {
-        auto tmp_moves = std::vector{'A'};
-        append_range(tmp_moves, nmoves);
-        tmp_moves.emplace_back('A');
+std::pair<std::vector<char>, u64>
+get_path_with_min_cost(char src,
+                       char dst,
+                       Matrix<char> const &keypad1,
+                       Matrix<char> const &keypad2,
+                       u64 depth) {
+  auto paths = all_shortest_paths(src, dst, keypad1, keypad2, depth);
+  if (depth == 0) {
+    std::vector<char> tmp_path = paths.front();
+    tmp_path.emplace_back('A');
+    return {tmp_path, tmp_path.size()};
+  }
 
-        std::vector<char> d0_moves;
-        for (auto const &window : tmp_moves | std::views::slide(2)) {
-          append_range(
-              d0_moves,
-              moves_for_path(window[0], window[1], keypad1, keypad2, depth - 1));
-        }
-        to_visit.emplace(nloc, nmoves, d0_moves.size());
-      }
+  u64 min_cost = std::numeric_limits<u64>::max();
+  std::vector<char> path_with_min_cost;
+  for (auto const &path : paths) {
+    u64 cost = 0;
+    std::vector<char> tmp_path{'A'};
+    append_range(tmp_path, path);
+    tmp_path.emplace_back('A');
+
+    for (auto const &window : tmp_path | std::views::slide(2)) {
+      cost +=
+          get_path_with_min_cost(window[0], window[1], keypad1, keypad2, depth - 1)
+              .second;
+    }
+    if (cost < min_cost) {
+      min_cost = cost;
+      path_with_min_cost = path;
     }
   }
 
-  auto find_it = move_map.find(find_key(dst, keypad));
-  find_it->second.first.emplace_back('A');
-  if (depth == 0) {
-    return find_it->second.first;
-  }
-  auto tmp_moves = std::vector{'A'};
-  append_range(tmp_moves, find_it->second.first);
-  std::vector<char> d0_moves;
-  for (auto const &window : tmp_moves | std::views::slide(2)) {
-    append_range(
-        d0_moves,
-        moves_for_path(window[0], window[1], keypad1, keypad2, depth - 1));
-  }
-  return d0_moves;
+  return {path_with_min_cost, min_cost};
 }
 } // namespace
