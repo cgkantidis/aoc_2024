@@ -2,9 +2,6 @@
 
 import re
 
-swap_xor = re.compile(r"(y\d\d) XOR (x\d\d) -> (\w+)")
-swap_and = re.compile(r"(y\d\d) AND (x\d\d) -> (\w+)")
-rename_xor = re.compile(r"x(\d\d) XOR y(\d\d) -> (?!z)(\w+)")
 rename_and = re.compile(r"x(\d\d) AND y(\d\d) -> (?!z)(\w+)")
 swap_xor2 = re.compile(r"(...) XOR XOR(\d\d) -> z(\d\d)")
 swap_or = re.compile(r"(...) OR AND(\d\d) -> (...)")
@@ -25,7 +22,19 @@ def apply_renames(lines, renames) -> list[str]:
     return new_lines
 
 
+def apply_first(lines, renames) -> list[str]:
+    for src, dst in renames.items():
+        lines = [
+            line.replace(f"-> {src}", "-> XXX")
+            .replace(f"-> {dst}", f"-> {src}")
+            .replace("-> XXX", f"-> {dst}")
+            for line in lines
+        ]
+    return lines
+
+
 def apply1(lines) -> list[str]:
+    swap_xor = re.compile(r"(y\d\d) XOR (x\d\d) -> (\w+)")
     new_lines = []
     for line in lines:
         if m := swap_xor.match(line):
@@ -35,6 +44,7 @@ def apply1(lines) -> list[str]:
 
 
 def apply2(lines) -> list[str]:
+    swap_and = re.compile(r"(y\d\d) AND (x\d\d) -> (\w+)")
     new_lines = []
     for line in lines:
         if m := swap_and.match(line):
@@ -44,6 +54,7 @@ def apply2(lines) -> list[str]:
 
 
 def apply3(lines, renames) -> list[str]:
+    rename_xor = re.compile(r"x(\d\d) XOR y(\d\d) -> (?!z)(\w+)")
     new_lines = []
     for line in lines:
         if m := rename_xor.match(line):
@@ -112,8 +123,21 @@ def apply9(lines, renames) -> list[str]:
     return new_lines
 
 
+def apply10(lines, renames) -> list[str]:
+    rename = re.compile(r"XOR01 AND AND00 -> (?!z)(...)")
+    new_lines = []
+    for line in lines:
+        if m := rename.match(line):
+            line = f"AND00 AND XOR01 -> AND_01"
+            renames[m.group(1)] = f"AND_01"
+        new_lines.append(line)
+    return new_lines
+
+
 renames = dict()
 lines = read_lines()
+lines = apply_first(lines, {"dhq": "z18", "kfp": "hbs", "pdg": "z22", "jcp": "z27"})
+
 lines = apply1(lines)
 lines = apply2(lines)
 lines = apply3(lines, renames)
@@ -127,8 +151,16 @@ lines = apply_renames(lines, renames)
 lines = apply8(lines)
 lines = apply9(lines, renames)
 lines = apply_renames(lines, renames)
-
+lines = apply10(lines, renames)
+lines = apply_renames(lines, renames)
 
 with open("test/d24.txt.new", "w", encoding="utf-8") as outfile:
     for line in lines:
         print(line, file=outfile)
+
+gates = []
+for k, v in {"dhq": "z18", "kfp": "hbs", "pdg": "z22", "jcp": "z27"}.items():
+    gates.extend((k, v))
+
+gates.sort()
+print(",".join(gates))
